@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, ValueEnum};
 use wasmtime::component::{bindgen, Component, Linker, ResourceTable};
-use wasmtime::{Engine, Store};
+use wasmtime::{Config, Engine, Store};
 use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiView};
 
 bindgen!({
@@ -55,7 +55,9 @@ impl WasiView for State {
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    let engine = Engine::default();
+    let mut config = Config::new();
+    config.cache_config_load_default()?;
+    let engine = Engine::new(&config)?;
     let component = Component::from_file(&engine, args.guest.component_path())?;
 
     let mut linker: Linker<State> = Linker::new(&engine);
