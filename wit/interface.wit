@@ -1,0 +1,5 @@
+package local:demo;
+
+world string-processor {
+    export process-string: func(input: string) -> string;
+}
