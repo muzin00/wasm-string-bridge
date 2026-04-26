@@ -1,0 +1,13 @@
+{
+  "name": "guest-js",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "mkdir -p dist && jco componentize src/index.js --wit ../../wit/interface.wit --world-name string-processor --disable http --disable fetch-event --out dist/guest_js.wasm"
+  },
+  "devDependencies": {
+    "@bytecodealliance/componentize-js": "^0.18.0",
+    "@bytecodealliance/jco": "^1.10.0"
+  }
+}

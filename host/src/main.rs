@@ -1,6 +1,7 @@
 use anyhow::Result;
+use clap::{Parser, ValueEnum};
 use wasmtime::component::{bindgen, Component, Linker, ResourceTable};
-use wasmtime::{Engine, Store};
+use wasmtime::{Config, Engine, Store};
 use wasmtime_wasi::{WasiCtx, WasiCtxBuilder, WasiView};
 
 bindgen!({
@@ -8,10 +9,34 @@ bindgen!({
     world: "string-processor",
 });
 
-const COMPONENT_PATH: &str = concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../target/wasm32-wasip2/release/guest_rust.wasm"
-);
+#[derive(Copy, Clone, Debug, ValueEnum)]
+enum Guest {
+    Rust,
+    Js,
+}
+
+impl Guest {
+    fn component_path(self) -> &'static str {
+        match self {
+            Guest::Rust => concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../target/wasm32-wasip2/release/guest_rust.wasm"
+            ),
+            Guest::Js => concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../guests/js/dist/guest_js.wasm"
+            ),
+        }
+    }
+}
+
+#[derive(Parser, Debug)]
+struct Args {
+    #[arg(long, value_enum, default_value_t = Guest::Rust)]
+    guest: Guest,
+
+    input: Option<String>,
+}
 
 struct State {
     ctx: WasiCtx,
@@ -28,8 +53,12 @@ impl WasiView for State {
 }
 
 fn main() -> Result<()> {
-    let engine = Engine::default();
-    let component = Component::from_file(&engine, COMPONENT_PATH)?;
+    let args = Args::parse();
+
+    let mut config = Config::new();
+    config.cache_config_load_default()?;
+    let engine = Engine::new(&config)?;
+    let component = Component::from_file(&engine, args.guest.component_path())?;
 
     let mut linker: Linker<State> = Linker::new(&engine);
     wasmtime_wasi::add_to_linker_sync(&mut linker)?;
@@ -42,9 +71,7 @@ fn main() -> Result<()> {
 
     let processor = StringProcessor::instantiate(&mut store, &component, &linker)?;
 
-    let input = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| "rust wasm".to_string());
+    let input = args.input.unwrap_or_else(|| "rust wasm".to_string());
     let output = processor.call_process_string(&mut store, &input)?;
     println!("{output}");
     Ok(())
