@@ -6,8 +6,8 @@ wit_bindgen::generate!({
 struct Component;
 
 impl Guest for Component {
-    fn process_string(_input: String) -> String {
-        unimplemented!()
+    fn process_string(input: String) -> String {
+        input.to_ascii_uppercase()
     }
 }
 
