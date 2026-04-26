@@ -28,3 +28,18 @@ wasm-string-bridge/
 └── guests/
     └── rust/               # Rust 製 Wasm ゲストコンポーネント
 ```
+
+## 実行手順
+
+```sh
+# 1. Guest を Wasm Component としてビルド
+cargo build -p guest-rust --target wasm32-wasip2 --release
+
+# 2. Host から Guest を呼び出す（第 1 引数が Guest への入力）
+cargo run -p host -- "rust wasm"
+# => RUST WASM   (Guest の process-string が本実装されている場合)
+```
+
+Guest 側の `process-string` が `unimplemented!()` のままだと実行時に
+trap して Host は `Err` を返すが、Host 側のコード経路（コンポーネントの
+ロード〜呼び出し）は完走する。
