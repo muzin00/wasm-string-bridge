@@ -20,11 +20,11 @@ impl Guest {
         match self {
             Guest::Rust => concat!(
                 env!("CARGO_MANIFEST_DIR"),
-                "/../target/wasm32-wasip2/release/guest_rust.wasm"
+                "/../target/wasm32-wasip2/release/guest_rust.cwasm"
             ),
             Guest::Js => concat!(
                 env!("CARGO_MANIFEST_DIR"),
-                "/../guests/js/dist/guest_js.wasm"
+                "/../guests/js/dist/guest_js.cwasm"
             ),
         }
     }
@@ -58,7 +58,10 @@ fn main() -> Result<()> {
     let mut config = Config::new();
     config.cache_config_load_default()?;
     let engine = Engine::new(&config)?;
-    let component = Component::from_file(&engine, args.guest.component_path())?;
+    // SAFETY: .cwasm はこのプロジェクトの `precompile` バイナリで
+    // 同じ wasmtime バージョン・同じホストで生成したものだけを読み込む前提。
+    let component =
+        unsafe { Component::deserialize_file(&engine, args.guest.component_path())? };
 
     let mut linker: Linker<State> = Linker::new(&engine);
     wasmtime_wasi::add_to_linker_sync(&mut linker)?;
