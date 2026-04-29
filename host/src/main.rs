@@ -13,6 +13,7 @@ bindgen!({
 enum Guest {
     Rust,
     Js,
+    Python,
 }
 
 impl Guest {
@@ -25,6 +26,10 @@ impl Guest {
             Guest::Js => concat!(
                 env!("CARGO_MANIFEST_DIR"),
                 "/../guests/js/dist/guest_js.wasm"
+            ),
+            Guest::Python => concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../guests/python/dist/guest_python.wasm"
             ),
         }
     }
